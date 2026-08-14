@@ -89,12 +89,12 @@ app.get('/api/health', (req, res) => {
 // Centralized error handler
 app.use(errorHandler);
 
-// Standalone server mode (Local development)
-if (!process.env.VERCEL && require.main === module) {
+// Start server listening when executed as a service (local dev or Vercel Web Service)
+if (require.main === module || process.env.PORT) {
   const PORT = process.env.PORT || 5000;
   connectDB().then(() => {
     app.listen(PORT, () => {
-      console.log(`[Server] MyPet Backend API running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+      console.log(`[Server] MyPet Backend API running on port ${PORT}`);
       startReminderCron();
     });
   }).catch(err => {
