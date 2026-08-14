@@ -104,15 +104,20 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🔐 Default Demo Credentials
+## 🌐 Deploying to Vercel
 
-To test the application immediately:
-- **Email**: `dr.smith@mypet.com`
-- **Password**: `Doctor123!`
+### Option 1: Monorepo Deployment (Recommended)
+1. Push your repository to GitHub.
+2. Import the root repository in Vercel.
+3. In Vercel Project Settings -> **Environment Variables**, add:
+   - `MONGO_URI`: `mongodb+srv://<user>:<password>@cluster.mongodb.net/mypet?retryWrites=true&w=majority` (MongoDB Atlas URI)
+   - `JWT_SECRET`: `your_secure_jwt_secret_key`
+4. Vercel will automatically detect `vercel.json`, deploy the React frontend static build, and route `/api/*` to the Express Serverless Function.
 
----
+### Option 2: Separate Deployments
+- **Backend Deployment**: Set Root Directory to `backend`. Add `MONGO_URI` and `JWT_SECRET` in environment variables.
+- **Frontend Deployment**: Set Root Directory to `frontend`. Add `VITE_API_BASE_URL` pointing to your backend URL (e.g. `https://mypet-backend.vercel.app/api`).
 
-## 📡 REST API Summary
 
 ### Auth
 - `POST /api/auth/register` — Register new practice
