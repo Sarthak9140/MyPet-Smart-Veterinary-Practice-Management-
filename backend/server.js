@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const { errorHandler } = require('./middleware/errorMiddleware');
-const { startReminderCron } = require('./jobs/reminderCron');
+const { startReminderCron, checkVaccinationReminders } = require('./jobs/reminderCron');
 const { seedDemoData } = require('./utils/seedData');
 
 // Route imports
@@ -17,9 +17,21 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 
-// Enable CORS for all origins in serverless / production
+// CORS Configuration
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: '*',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.VERCEL || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
   credentials: true
 }));
 
@@ -45,6 +57,16 @@ app.use('/api/products', productRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
+// Vercel Cron Endpoint for automated daily vaccination reminders
+app.get('/api/cron/reminders', async (req, res, next) => {
+  try {
+    await checkVaccinationReminders();
+    res.json({ success: true, message: 'Vaccination reminders checked successfully' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Database seed endpoint
 app.post('/api/seed', async (req, res, next) => {
   try {
@@ -55,7 +77,7 @@ app.post('/api/seed', async (req, res, next) => {
   }
 });
 
-// Root API status endpoint
+// Root API health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',

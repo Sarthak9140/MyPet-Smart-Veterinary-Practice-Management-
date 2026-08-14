@@ -6,146 +6,118 @@
 [![Express](https://img.shields.io/badge/Framework-Express.js-lightgrey)](https://expressjs.com)
 [![React](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-blue)](https://reactjs.org)
 [![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind%20CSS-teal)](https://tailwindcss.com)
-[![MongoDB](https://img.shields.io/badge/Database-MongoDB%20%2F%20MongoMemoryServer-green)](https://www.mongodb.com)
+[![MongoDB](https://img.shields.io/badge/Database-MongoDB%20Atlas-green)](https://www.mongodb.com)
 
 **MyPet** is a production-quality full-stack veterinary practice management platform designed for pet doctors to organize patient records, track vaccination schedules, manage veterinary product inventory, and receive automated vaccination reminders.
 
 ---
 
-## 📋 The Real-World Problem Solved
-
-Veterinary practices treat dozens of pets weekly. A doctor administers a vaccine today, but must track:
-- **Which pet** received the vaccine?
-- **Which vaccine** was given and what batch number?
-- **On what date** was it administered?
-- **When is the next booster date** due?
-- **Which pets** are due today, due soon, or overdue?
-
-Manual paper notebooks or spreadsheets frequently lead to missed vaccination dates. **MyPet** digitizes all pet records, automatically computes vaccination statuses (`Overdue`, `Due Today`, `Due Soon`, `Upcoming`), and runs a background scheduler to send deduplicated alerts to the doctor's dashboard.
-
----
-
-## ✨ Core Features
-
-1. **Patient & Owner Records**: Full pet medical profiles, breeds, age, weight, medical notes, and owner contact details.
-2. **Vaccination Management**: Record vaccines, doses, batch numbers, administered dates, and next scheduled booster dates.
-3. **Smart Dynamic Status Logic**:
-   - `Overdue`: `nextVaccinationDate < today`
-   - `Due Today`: `nextVaccinationDate == today`
-   - `Due Soon`: Next 1–2 days
-   - `Upcoming`: More than 2 days away
-4. **Automated Background Reminders**: Node-cron background service checks upcoming & overdue vaccinations daily and creates deduplicated alerts in MongoDB.
-5. **Product & Inventory Control**: Track vaccines, medicines, supplies, unit prices, low stock thresholds, and expiration date warnings.
-6. **Practice Analytics Dashboard**: Interactive Recharts graphs (Species distribution & Inventory breakdown) and dynamic stat cards.
-7. **Search, Filter & Sort**: Global instant search across pet names, owner phones, vaccine names, plus multi-criteria filters and sorting (A-Z, dates, status).
-8. **Multi-Tenancy Security**: Strict doctor data isolation using JWT authentication and password hashing.
-
----
-
-## 🛠️ Technology Stack
-
-- **Frontend**: React 18, Vite, Tailwind CSS, Lucide Icons, Recharts, Axios, React Router v6
-- **Backend**: Node.js, Express.js, JWT Authentication, bcryptjs, node-cron
-- **Database**: MongoDB & Mongoose (with automatic fallback to `mongodb-memory-server` for zero-configuration local runs)
-
----
-
-## 📁 Project Architecture
+## 🏗️ Architecture (Single Vercel Project & Domain)
 
 ```text
-MyPet/
-├── backend/
-│   ├── config/          # Database connector (MongoDB + MongoMemoryServer fallback)
-│   ├── controllers/     # Auth, Pet, Owner, Vaccination, Product, Notification, Dashboard
-│   ├── jobs/            # Node-cron automated vaccination reminder scheduler
-│   ├── middleware/      # JWT route protection & centralized error handler
-│   ├── models/          # User, Owner, Pet, Vaccination, Product, Notification schemas
-│   ├── routes/          # REST API route handlers
-│   ├── utils/           # Demo dataset seeder script
-│   ├── server.js        # Express server entry point
-│   └── package.json
-│
-├── frontend/
-│   ├── src/
-│   │   ├── components/  # Navbar, Sidebar, StatCard, LoadingSkeleton, EmptyState, ConfirmModal
-│   │   ├── context/     # AuthContext (JWT session) & ToastContext (global alerts)
-│   │   ├── layouts/     # DashboardLayout wrapper
-│   │   ├── pages/       # LandingPage, LoginPage, RegisterPage, Dashboard, PetsPage, PetDetailPage,
-│   │   │                # VaccinationsPage, ProductsPage, NotificationsPage, ProfilePage, SettingsPage, AboutPage
-│   │   ├── services/    # Axios API client with auth interceptor
-│   │   ├── App.jsx      # Router & Protected route configuration
-│   │   └── main.jsx     # App entry point
-│   └── package.json
-└── README.md
+                        GitHub Repository (MYPET)
+                                   │
+                                   ▼
+                   ONE VERCEL PROJECT (https://mypet.vercel.app)
+                                   │
+             ┌─────────────────────┴─────────────────────┐
+             ▼                                           ▼
+  Frontend (React + Vite SPA)                  Backend (Express API)
+  Serves: /, /dashboard, /pets,               Serves: /api/* endpoints &
+          /vaccinations, /products                    Vercel Cron (/api/cron/*)
+             │                                           │
+             └─────────── Communicates via /api ─────────┘
+                                                         │
+                                                         ▼
+                                                  MongoDB Atlas
 ```
+
+- **Frontend Domain**: Single Vercel domain (e.g. `https://mypet.vercel.app`)
+- **API Routing**: All frontend API calls go through relative `/api` path (e.g., `axios.get("/api/pets")`), eliminating CORS issues and cross-domain dependencies.
+- **Client-Side SPA Routing**: Vite SPA rules in `vercel.json` ensure refreshing routes like `/dashboard` or `/pets` never throw 404 errors.
+- **Automated Vercel Cron**: Daily vaccination reminder checks are triggered via Vercel Cron (`/api/cron/reminders`).
 
 ---
 
-## 🚀 Running Locally
+## 💻 Local Development Setup
 
-### Prerequisites
-- Node.js (v18+) & npm
-
-### 1. Backend Setup
+### 1. Install Dependencies
 ```bash
+# Install backend dependencies
 cd backend
 npm install
-npm start
-```
-*Note: The backend automatically detects if a local MongoDB service is running. If not, it seamlessly starts an in-memory MongoDB instance and pre-seeds realistic veterinary practice demo data!*
 
-### 2. Frontend Setup
-```bash
-cd frontend
+# Install frontend dependencies
+cd ../frontend
 npm install
-npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 2. Run Locally
+- **Start Backend API** (Port 5000):
+  ```bash
+  cd backend
+  npm start
+  ```
+  *(Note: Locally, if `MONGO_URI` is not set, the backend automatically uses an in-memory database pre-seeded with demo data!)*
+
+- **Start Frontend App** (Port 3000):
+  ```bash
+  cd frontend
+  npm run dev
+  ```
+  Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🌐 Deploying to Vercel
+## 🛠️ Environment Variables (.env)
 
-### Option 1: Monorepo Deployment (Recommended)
-1. Push your repository to GitHub.
-2. Import the root repository in Vercel.
-3. In Vercel Project Settings -> **Environment Variables**, add:
-   - `MONGO_URI`: `mongodb+srv://<user>:<password>@cluster.mongodb.net/mypet?retryWrites=true&w=majority` (MongoDB Atlas URI)
-   - `JWT_SECRET`: `your_secure_jwt_secret_key`
-4. Vercel will automatically detect `vercel.json`, deploy the React frontend static build, and route `/api/*` to the Express Serverless Function.
+| Variable | Description | Required in Production (Vercel) |
+|---|---|---|
+| `MONGO_URI` | MongoDB Atlas Connection String (`mongodb+srv://...`) | **Yes** |
+| `JWT_SECRET` | Secret key for signing JWT doctor auth tokens | **Yes** |
+| `VITE_API_URL` | Frontend API base path (defaults to `/api`) | Optional (Default: `/api`) |
 
-### Option 2: Separate Deployments
-- **Backend Deployment**: Set Root Directory to `backend`. Add `MONGO_URI` and `JWT_SECRET` in environment variables.
-- **Frontend Deployment**: Set Root Directory to `frontend`. Add `VITE_API_BASE_URL` pointing to your backend URL (e.g. `https://mypet-backend.vercel.app/api`).
+*See [.env.example](file:///.env.example) for placeholder values.*
 
+---
 
-### Auth
-- `POST /api/auth/register` — Register new practice
+## 🌐 Deploying the ENTIRE App to Vercel (One Click)
+
+### 1. Push to GitHub
+```bash
+git add .
+git commit -m "Prepare MyPet for single-project Vercel deployment"
+git push origin main
+```
+
+### 2. Import into Vercel
+1. Log into your [Vercel Dashboard](https://vercel.com).
+2. Click **Add New** -> **Project**.
+3. Import your GitHub repository (`MYPET`).
+4. Keep the **Root Directory** as `./` (do NOT select subfolders).
+
+### 3. Add Environment Variables in Vercel
+Under **Environment Variables**, add:
+- `MONGO_URI` = `mongodb+srv://<username>:<password>@cluster0.mongodb.net/mypet?retryWrites=true&w=majority`
+- `JWT_SECRET` = `your_random_secret_key_here`
+
+### 4. Deploy!
+Click **Deploy**. Vercel will build the React Vite application and serve all backend Express API endpoints under your single public Vercel domain!
+
+---
+
+## 📡 Key REST API Endpoints
+
+- `GET /api/health` — API health check (`{"status": "online", "app": "MyPet Backend API"}`)
 - `POST /api/auth/login` — Doctor authentication
-- `GET /api/auth/me` — Current doctor profile
-- `PUT /api/auth/profile` — Update clinic info
-- `PUT /api/auth/password` — Change password
+- `POST /api/auth/register` — Practice registration
+- `GET /api/pets` — Get patient pets
+- `GET /api/vaccinations` — Vaccination schedules & statuses (`Overdue`, `Due Today`, `Due Soon`, `Upcoming`)
+- `GET /api/products` — Inventory products with stock level badges (`In Stock`, `Low Stock`, `Out of Stock`)
+- `GET /api/cron/reminders` — Automated vaccination reminder scan endpoint (Vercel Cron)
 
-### Pets & Owners
-- `GET /api/pets` — Get doctor's pets (supports `?search=` and `?petType=`)
-- `GET /api/pets/:id` — Get pet profile & vaccination history
-- `POST /api/pets` — Register new pet & owner
-- `PUT /api/pets/:id` — Update pet
-- `DELETE /api/pets/:id` — Delete pet & associated records
+---
 
-### Vaccinations
-- `GET /api/vaccinations` — List vaccinations (supports `?search=`, `?status=`, `?sort=`)
-- `POST /api/vaccinations` — Add vaccination record
-- `PUT /api/vaccinations/:id` — Update record
-- `DELETE /api/vaccinations/:id` — Delete record
-
-### Products & Inventory
-- `GET /api/products` — List inventory products
-- `POST /api/products` — Add inventory product
-- `PATCH /api/products/:id/stock` — Adjust stock quantity (+/-)
-- `DELETE /api/products/:id` — Delete product
-
-### Notifications & Dashboard
-- `GET /api/notifications` — Fetch doctor notifications & unread count
-- `PATCH /api/notifications/read-all` — Mark all read
-- `GET /api/dashboard/stats` — Aggregate stats, lists, and chart analytics
+## 🔐 Default Demo Credentials (Local Dev)
+- **Email**: `dr.smith@mypet.com`
+- **Password**: `Doctor123!`
